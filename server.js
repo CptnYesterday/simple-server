@@ -5,9 +5,18 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://philipptietjen:g4liMZajW5U9LcoM@cluster0.d21qq0l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('Could not connect to MongoDB:', err));
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    family: 4
+}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch(err => {
+    console.error('Could not connect to MongoDB:', err);
+    process.exit(1); // Exit if we can't connect to the database
+});
 
 // Middleware to parse JSON bodies
 app.use(express.json());
