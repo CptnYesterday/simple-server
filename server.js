@@ -4,6 +4,12 @@ const Visit = require('./models/Visit');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Validate required environment variables
+if (!process.env.MONGODB_URI) {
+    console.error('MONGODB_URI environment variable is not set');
+    process.exit(1);
+}
+
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
