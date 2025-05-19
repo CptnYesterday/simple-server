@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const Visit = require('./models/Visit');
+const axios = require('axios');  // Add axios for making HTTP requests
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -26,6 +27,35 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// Wake-up endpoint that calls external API
+app.get('/wake-up', async (req, res) => {
+    try {
+        // Call external API (example using JSONPlaceholder)
+        const apiResponse = await axios.get('https://jsonplaceholder.typicode.com/posts/1');
+        
+        // Log the API response
+        console.log('External API response:', apiResponse.data);
+        
+        // Create a visit record
+        const visit = new Visit();
+        await visit.save();
+        
+        res.json({
+            status: 'success',
+            message: 'Server woke up and called external API',
+            apiResponse: apiResponse.data,
+            timestamp: new Date()
+        });
+    } catch (error) {
+        console.error('Error during wake-up:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to complete wake-up routine',
+            error: error.message
+        });
+    }
+});
 
 // Basic route
 app.get('/', async (req, res) => {

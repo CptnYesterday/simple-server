@@ -11,6 +11,6 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Server
+      - name: Wake up server and trigger API call
         run: |
-          curl -X GET https://simple-server-dr9g.onrender.com/health 
+          curl -X GET https://simple-server-pt.onrender.com/wake-up 
