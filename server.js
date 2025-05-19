@@ -1,49 +1,37 @@
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
+const mongoose = require('mongoose');
+const Visit = require('./models/Visit');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// MongoDB connection
+mongoose.connect('mongodb+srv://philipptietjen:g4liMZajW5U9LcoM@cluster0.d21qq0l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('Could not connect to MongoDB:', err));
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Path to our data file
-const dataFile = path.join(__dirname, 'data', 'visits.json');
-
-// Function to read visit data
-async function readVisitData() {
-  try {
-    const data = await fs.readFile(dataFile, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading visit data:', error);
-    return { totalVisits: 0, lastVisit: null };
-  }
-}
-
-// Function to write visit data
-async function writeVisitData(data) {
-  try {
-    await fs.writeFile(dataFile, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Error writing visit data:', error);
-  }
-}
-
 // Basic route
 app.get('/', async (req, res) => {
   try {
-    const data = await readVisitData();
-    data.totalVisits += 1;
-    data.lastVisit = new Date().toISOString();
-    await writeVisitData(data);
+    // Create a new visit record
+    const visit = new Visit();
+    await visit.save();
+
+    // Get total visits
+    const totalVisits = await Visit.countDocuments();
     
+    // Get the last visit
+    const lastVisit = await Visit.findOne().sort({ timestamp: -1 });
+
     res.json({ 
       message: 'Welcome to the Simple Server!',
-      visits: data.totalVisits,
-      lastVisit: data.lastVisit
+      visits: totalVisits,
+      lastVisit: lastVisit ? lastVisit.timestamp : null
     });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ error: 'Failed to update visit count' });
   }
 });
@@ -61,12 +49,15 @@ app.get('/health', (req, res) => {
 // Stats route to check visit count
 app.get('/stats', async (req, res) => {
   try {
-    const data = await readVisitData();
+    const totalVisits = await Visit.countDocuments();
+    const lastVisit = await Visit.findOne().sort({ timestamp: -1 });
+    
     res.json({ 
-      totalVisits: data.totalVisits,
-      lastVisit: data.lastVisit
+      totalVisits,
+      lastVisit: lastVisit ? lastVisit.timestamp : null
     });
   } catch (error) {
+    console.error('Error:', error);
     res.status(500).json({ error: 'Failed to read stats' });
   }
 });
